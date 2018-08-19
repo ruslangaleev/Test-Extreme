@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Vacancies.Data.Models;
 using Vacancies.Data.Repositories;
+using Vacancies.Services.Clients.Interfaces;
 using Vacancies.Services.Services.Logic;
 
 namespace Vacancies.Tests
@@ -14,7 +15,7 @@ namespace Vacancies.Tests
     public class VacanciesManagerTests
     {
         [Test]
-        public async Task ReturnsFalseIfVacanciesUpdated()
+        public async Task ReturnsFalseIfVacanciesActual()
         {
             // Подготовка
             var vacanciesRepositoryMock = new Mock<IVacanciesRepository>();
@@ -22,7 +23,8 @@ namespace Vacancies.Tests
             {
                 UpdateAt = DateTime.Now.AddHours(-2)
             });
-            var vacanciesManager = new VacanciesManager(vacanciesRepositoryMock.Object);
+            var zpClient = new Mock<IZpClient>();
+            var vacanciesManager = new VacanciesManager(vacanciesRepositoryMock.Object, zpClient.Object);
 
             // Действие
             var result = await vacanciesManager.UpdateVacancies();
@@ -31,6 +33,29 @@ namespace Vacancies.Tests
             Assert.IsFalse(result);
         }
 
+        [Test]
+        public async Task ReturnsTrueIfVacanciesUpdated()
+        {
+            // Подготовка
+            var vacanciesRepositoryMock = new Mock<IVacanciesRepository>();
+            vacanciesRepositoryMock.Setup(t => t.GetLastVersion()).ReturnsAsync(new VersionInfo
+            {
+                UpdateAt = DateTime.Now.AddDays(-1)
+            });
+            var zpClient = new Mock<IZpClient>();
+            zpClient.Setup(t => t.GetRubrics()).ReturnsAsync(new List<Rubric>
+            {
+                new Rubric(),
+                new Rubric()
+            });
+            var vacanciesManager = new VacanciesManager(vacanciesRepositoryMock.Object, zpClient.Object);
+
+            // Действие
+            var result = await vacanciesManager.UpdateVacancies();
+
+            // Проверка
+            Assert.IsTrue(result);
+        }
 
         // Проверить, последнее обновление вакансий
         // Если база давно не обновлялась, тогда обновляем

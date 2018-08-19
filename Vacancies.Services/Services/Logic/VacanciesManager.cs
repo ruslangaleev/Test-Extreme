@@ -24,7 +24,7 @@ namespace Vacancies.Services.Services.Logic
             _vacanciesRepository = vacanciesRepository ?? throw new ArgumentNullException(nameof(vacanciesRepository));
             _zpClient = zpClient ?? throw new ArgumentNullException(nameof(IZpClient));
             // Указать TimeOutDays
-            TimeOutDays = 2;
+            TimeOutDays = 1;
         }
 
         public async Task<bool> UpdateVacancies()
@@ -57,7 +57,7 @@ namespace Vacancies.Services.Services.Logic
 
             int count = 0;
             int offset = 0;
-            while(count < versionInfo.CountUpdatedVacancies)
+            do
             {
                 var vacanciesInfo = await _zpClient.GetVacancies(limit: LimitVacancies, offset: offset);
                 if (count == 0)
@@ -68,9 +68,10 @@ namespace Vacancies.Services.Services.Logic
                 vacanciesInfo.vacancies.ToList().ForEach(t => t.UpdateAt = updateAt);
                 await _vacanciesRepository.AddRangeVacancies(vacanciesInfo.vacancies);
 
-                versionInfo.CountUpdatedVacancies =+ LimitVacancies;
+                versionInfo.CountUpdatedVacancies = +LimitVacancies;
                 await _vacanciesRepository.UpdateVersionInfo(versionInfo);
             }
+            while (count < versionInfo.CountUpdatedVacancies);
 
             return true;
         }
