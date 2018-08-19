@@ -57,11 +57,19 @@ namespace Vacancies.Services.Services.Logic
 
             int count = 0;
             int offset = 0;
-            while(true)
+            while(count < versionInfo.CountUpdatedVacancies)
             {
-                var vacancies = await _zpClient.GetVacancies(limit: LimitVacancies, offset: offset);
-                vacancies.ToList().ForEach(t => t.UpdateAt = updateAt);
-                await _vacanciesRepository.AddRangeVacancies(vacancies);
+                var vacanciesInfo = await _zpClient.GetVacancies(limit: LimitVacancies, offset: offset);
+                if (count == 0)
+                {
+                    count = vacanciesInfo.Count;
+                    versionInfo.CountVacancies = vacanciesInfo.Count;
+                }
+                vacanciesInfo.vacancies.ToList().ForEach(t => t.UpdateAt = updateAt);
+                await _vacanciesRepository.AddRangeVacancies(vacanciesInfo.vacancies);
+
+                versionInfo.CountUpdatedVacancies =+ LimitVacancies;
+                await _vacanciesRepository.UpdateVersionInfo(versionInfo);
             }
 
             return true;

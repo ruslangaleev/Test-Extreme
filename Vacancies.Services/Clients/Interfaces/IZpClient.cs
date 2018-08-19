@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Vacancies.Data.Models;
+using Vacancies.Services.Services.ResourceModels;
 
 namespace Vacancies.Services.Clients.Interfaces
 {
@@ -10,6 +11,6 @@ namespace Vacancies.Services.Clients.Interfaces
     {
         Task<IEnumerable<Rubric>> GetRubrics();
 
-        Task<IEnumerable<Vacancy>> GetVacancies(int limit = 25, int offset = 0);
+        Task<VacanciesInfo> GetVacancies(int limit = 25, int offset = 0);
     }
 }
