@@ -4,19 +4,25 @@ using System.Text;
 using System.Threading.Tasks;
 using Vacancies.Data.Models;
 using Vacancies.Data.Repositories;
+using Vacancies.Services.Clients.Interfaces;
+using System.Linq;
 
 namespace Vacancies.Services.Services.Logic
 {
     public class VacanciesManager : IVacanciesManager
     {
-        public readonly IVacanciesRepository _vacanciesRepository;
+        private readonly IVacanciesRepository _vacanciesRepository;
 
-        public int TimeOutDays;
+        private readonly IZpClient _zpClient;
 
-        public VacanciesManager(IVacanciesRepository vacanciesRepository)
+        private readonly int TimeOutDays;
+
+        private readonly int LimitVacancies;
+
+        public VacanciesManager(IVacanciesRepository vacanciesRepository, IZpClient zpClient)
         {
             _vacanciesRepository = vacanciesRepository ?? throw new ArgumentNullException(nameof(vacanciesRepository));
-
+            _zpClient = zpClient ?? throw new ArgumentNullException(nameof(IZpClient));
             // Указать TimeOutDays
             TimeOutDays = 2;
         }
@@ -32,6 +38,30 @@ namespace Vacancies.Services.Services.Logic
             if (difference < TimeOutDays)
             {
                 return false;
+            }
+
+            var updateAt = DateTime.Now;
+            versionInfo = new VersionInfo
+            {
+                UpdateAt = updateAt,
+                IsRubricUpdated = false
+            };
+            await _vacanciesRepository.AddVersionInfo(versionInfo);
+
+            var rubrics = await _zpClient.GetRubrics();
+            rubrics.ToList().ForEach(t => t.UpdateAt = updateAt);
+            await _vacanciesRepository.AddRangeRubrics(rubrics);
+
+            versionInfo.IsRubricUpdated = true;
+            await _vacanciesRepository.UpdateVersionInfo(versionInfo);
+
+            int count = 0;
+            int offset = 0;
+            while(true)
+            {
+                var vacancies = await _zpClient.GetVacancies(limit: LimitVacancies, offset: offset);
+                vacancies.ToList().ForEach(t => t.UpdateAt = updateAt);
+                await _vacanciesRepository.AddRangeVacancies(vacancies);
             }
 
             return true;
