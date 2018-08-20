@@ -26,5 +26,7 @@ namespace Vacancies.Data.Models
         /// Количество обновленных вакансий.
         /// </summary>
         public int CountUpdatedVacancies { get; set; }
+
+        public string ErrorMessage { get; set; }
     }
 }

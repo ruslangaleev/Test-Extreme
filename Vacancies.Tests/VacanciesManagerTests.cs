@@ -8,6 +8,7 @@ using Vacancies.Data.Models;
 using Vacancies.Data.Repositories;
 using Vacancies.Services.Clients.Interfaces;
 using Vacancies.Services.Services.Logic;
+using Vacancies.Services.Services.ResourceModels;
 
 namespace Vacancies.Tests
 {
@@ -47,6 +48,15 @@ namespace Vacancies.Tests
             {
                 new Rubric(),
                 new Rubric()
+            });
+            zpClient.Setup(t => t.GetVacancies(It.IsAny<int>(), It.IsAny<int>())).ReturnsAsync(new VacanciesInfo
+            {
+                vacancies = new List<Vacancy>
+                {
+                    new Vacancy(),
+                    new Vacancy()
+                },
+                Count = 500
             });
             var vacanciesManager = new VacanciesManager(vacanciesRepositoryMock.Object, zpClient.Object);
 

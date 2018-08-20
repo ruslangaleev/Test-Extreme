@@ -25,10 +25,12 @@ namespace Vacancies.Services.Services.Logic
             _zpClient = zpClient ?? throw new ArgumentNullException(nameof(IZpClient));
             // Указать TimeOutDays
             TimeOutDays = 1;
+            LimitVacancies = 100;
         }
 
         public async Task<bool> UpdateVacancies()
         {
+            // Проверяем версию обновлений
             var versionInfo = await _vacanciesRepository.GetLastVersion();
             if (versionInfo == null)
             {
@@ -40,6 +42,7 @@ namespace Vacancies.Services.Services.Logic
                 return false;
             }
 
+            // Новая версия
             var updateAt = DateTime.Now;
             versionInfo = new VersionInfo
             {
@@ -48,6 +51,7 @@ namespace Vacancies.Services.Services.Logic
             };
             await _vacanciesRepository.AddVersionInfo(versionInfo);
 
+            // Добавление новых рубрик
             var rubrics = await _zpClient.GetRubrics();
             rubrics.ToList().ForEach(t => t.UpdateAt = updateAt);
             await _vacanciesRepository.AddRangeRubrics(rubrics);
@@ -60,6 +64,13 @@ namespace Vacancies.Services.Services.Logic
             do
             {
                 var vacanciesInfo = await _zpClient.GetVacancies(limit: LimitVacancies, offset: offset);
+                if (vacanciesInfo == null)
+                {
+                    versionInfo.ErrorMessage = "Список вакансий пуст.";
+                    await _vacanciesRepository.UpdateVersionInfo(versionInfo);
+                    // SaveChanges
+                    break;
+                }
                 if (count == 0)
                 {
                     count = vacanciesInfo.Count;
@@ -68,10 +79,12 @@ namespace Vacancies.Services.Services.Logic
                 vacanciesInfo.vacancies.ToList().ForEach(t => t.UpdateAt = updateAt);
                 await _vacanciesRepository.AddRangeVacancies(vacanciesInfo.vacancies);
 
-                versionInfo.CountUpdatedVacancies = +LimitVacancies;
+                versionInfo.CountUpdatedVacancies += LimitVacancies;
                 await _vacanciesRepository.UpdateVersionInfo(versionInfo);
+
+                offset += LimitVacancies;
             }
-            while (count < versionInfo.CountUpdatedVacancies);
+            while (count > versionInfo.CountUpdatedVacancies);
 
             return true;
         }
