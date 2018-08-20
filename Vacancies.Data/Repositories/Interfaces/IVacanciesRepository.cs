@@ -11,6 +11,12 @@ namespace Vacancies.Data.Repositories
         /// </summary>
         Task<VersionInfo> GetLastVersion();
 
+        Task<IEnumerable<Rubric>> GetRubrics();
+
+        Task<IEnumerable<Vacancy>> GetVacancies();
+
+        Task<IEnumerable<Vacancy>> GetVacancies(string rubricId);
+
         Task AddVersionInfo(VersionInfo versionInfo);
 
         Task UpdateVersionInfo(VersionInfo versionInfo);

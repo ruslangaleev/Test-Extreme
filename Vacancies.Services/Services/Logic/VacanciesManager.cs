@@ -28,6 +28,21 @@ namespace Vacancies.Services.Services.Logic
             LimitVacancies = 100;
         }
 
+        public async Task<IEnumerable<Rubric>> GetRubrics()
+        {
+            return await _vacanciesRepository.GetRubrics();
+        }
+
+        public async Task<IEnumerable<Vacancy>> GetVacancies()
+        {
+            return await _vacanciesRepository.GetVacancies();
+        }
+
+        public async Task<IEnumerable<Vacancy>> GetVacancies(string rubricId)
+        {
+            return await _vacanciesRepository.GetVacancies(rubricId);
+        }
+
         public async Task<bool> UpdateVacancies()
         {
             // Проверяем версию обновлений
